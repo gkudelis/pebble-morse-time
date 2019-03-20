@@ -1,19 +1,22 @@
 #include <pebble.h>
 
+// dot duration in miliseconds
+#define DD 100
+
 static Window *window;
 //static TextLayer *text_layer;
 
 static const uint32_t const morse_digits[][9] = {
-    { 300, 100, 300, 100, 300, 100, 300, 100, 300 },
-    { 100, 100, 300, 100, 300, 100, 300, 100, 300 },
-    { 100, 100, 100, 100, 300, 100, 300, 100, 300 },
-    { 100, 100, 100, 100, 100, 100, 300, 100, 300 },
-    { 100, 100, 100, 100, 100, 100, 100, 100, 300 },
-    { 100, 100, 100, 100, 100, 100, 100, 100, 100 },
-    { 300, 100, 100, 100, 100, 100, 100, 100, 100 },
-    { 300, 100, 300, 100, 100, 100, 100, 100, 100 },
-    { 300, 100, 300, 100, 300, 100, 100, 100, 100 },
-    { 300, 100, 300, 100, 300, 100, 300, 100, 100 },
+    { 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD },
+    { 1*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD },
+    { 1*DD, 1*DD, 1*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD },
+    { 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 3*DD, 1*DD, 3*DD },
+    { 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 3*DD },
+    { 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD },
+    { 3*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD },
+    { 3*DD, 1*DD, 3*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD },
+    { 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 1*DD, 1*DD, 1*DD },
+    { 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 1*DD },
 };
 
 static uint32_t *segments;
@@ -24,11 +27,11 @@ static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     const size_t element_size = sizeof(uint32_t);
 
     memcpy(&segments[0], &morse_digits[0][0], 9 * element_size);
-    segments[9] = 300;
+    segments[9] = 3 * DD;
     memcpy(&segments[10], &morse_digits[7][0], 9 * element_size);
-    segments[19] = 300;
+    segments[19] = 7 * DD;
     memcpy(&segments[20], &morse_digits[2][0], 9 * element_size);
-    segments[29] = 300;
+    segments[29] = 3 * DD;
     memcpy(&segments[30], &morse_digits[4][0], 9 * element_size);
 
     VibePattern pat = {
