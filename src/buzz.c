@@ -26,18 +26,37 @@ static uint32_t *durations;
 
 static void fill_durations_array(uint32_t *durations, char *time) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, time);
-    // read time string and use the numerical characters
-    memcpy(&durations[0], &morse_digits[0][0], 9 * element_size);
-    durations[9] = 3 * DD;
-    memcpy(&durations[10], &morse_digits[7][0], 9 * element_size);
-    durations[19] = 7 * DD;
-    memcpy(&durations[20], &morse_digits[2][0], 9 * element_size);
-    durations[29] = 3 * DD;
-    memcpy(&durations[30], &morse_digits[4][0], 9 * element_size);
+    // fill durations based on hour/minute digits
+    if (time[1] == ':') {
+        // hour only has a single digit
+        memcpy(&durations[0], &morse_digits[0][0], 9 * element_size);
+        durations[9] = 3 * DD;
+        memcpy(&durations[10], &morse_digits[time[0]-'0'][0], 9 * element_size);
+        durations[19] = 7 * DD;
+        memcpy(&durations[20], &morse_digits[time[2]-'0'][0], 9 * element_size);
+        durations[29] = 3 * DD;
+        memcpy(&durations[30], &morse_digits[time[3]-'0'][0], 9 * element_size);
+    } else {
+        // hour has two digits
+        memcpy(&durations[0], &morse_digits[time[0]-'0'][0], 9 * element_size);
+        durations[9] = 3 * DD;
+        memcpy(&durations[10], &morse_digits[time[1]-'0'][0], 9 * element_size);
+        durations[19] = 7 * DD;
+        memcpy(&durations[20], &morse_digits[time[3]-'0'][0], 9 * element_size);
+        durations[29] = 3 * DD;
+        memcpy(&durations[30], &morse_digits[time[4]-'0'][0], 9 * element_size);
+    }
 }
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-    fill_durations_array(durations, "07:24");
+    // get current time and fill durations array based on the time
+    char *timestr = malloc(10);
+    clock_copy_time_string(timestr, 8);
+    fill_durations_array(durations, timestr);
+    free(timestr);
+
+    // create and queue the vibrations pattern
+    // this call is async so we can't just free durations array memory
     VibePattern pat = {
         .durations = durations,
         .num_segments = 39,
