@@ -1,0 +1,19 @@
+{
+  "uuid": "92efb4df-afcd-48a3-b58b-c6dd06a9a4b4",
+  "shortName": "buzz",
+  "longName": "buzz",
+  "companyName": "MakeAwesomeHappen",
+  "versionLabel": "1.0",
+  "sdkVersion": "3",
+  "targetPlatforms": ["aplite", "basalt", "chalk"],
+  "enableMultiJS": true,
+  "watchapp": {
+    "watchface": false
+  },
+  "appKeys": {
+    "dummy": 0
+  },
+  "resources": {
+    "media": []
+  }
+}
