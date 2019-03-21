@@ -6,60 +6,82 @@
 static Window *window;
 //static TextLayer *text_layer;
 
-// size of one time element
-const size_t element_size = sizeof(uint32_t);
-// array of sequences represening vibration patterns for digits
-static const uint32_t const morse_digits[][9] = {
-    { 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD },
-    { 1*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD },
-    { 1*DD, 1*DD, 1*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD },
-    { 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 3*DD, 1*DD, 3*DD },
-    { 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 3*DD },
-    { 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD },
-    { 3*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD },
-    { 3*DD, 1*DD, 3*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD, 1*DD },
-    { 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 1*DD, 1*DD, 1*DD },
-    { 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 3*DD, 1*DD, 1*DD },
-};
-
 static uint32_t *durations;
 
-static void fill_durations_array(uint32_t *durations, char *time) {
+static size_t append_digit(uint32_t *position, char digit) {
+    int d = digit - '0';
+    if (d == 0) {
+        // append dashes
+        for (int i=0; i<5; i++) {
+            position[2*i] = 3*DD;
+            position[2*i + 1] = DD;
+        }
+        // pause after digit is longer
+        position[9] = 3*DD;
+        // move position to where the next element would go
+        return 10;
+    } else if (d < 6) {
+        // append dots
+        for (int i=0; i<d; i++) {
+            position[2*i] = DD;
+            position[2*i + 1] = DD;
+        }
+        // pause after digit is longer
+        position[2*d - 1] = 3*DD;
+        // move position to where the next element would go
+        return 2*d;
+    } else {
+        // append dashes
+        for (int i=0; i<d-5; i++) {
+            position[2*i] = 3*DD;
+            position[2*i + 1] = DD;
+        }
+        // pause after digit is longer
+        position[2*(d-5) - 1] = 3*DD;
+        // move position to where the next element would go
+        return 2*(d-5);
+    }
+}
+
+// fill durations based on time string, return the number of segments
+static size_t fill_durations_array(uint32_t *durations, char *time) {
     APP_LOG(APP_LOG_LEVEL_DEBUG, time);
-    // fill durations based on hour/minute digits
+    // track how many elements were written to the durations array
+    // NOTE: spaces count as elements
+    size_t elements_written = 0;
     if (time[1] == ':') {
         // hour only has a single digit
-        memcpy(&durations[0], &morse_digits[0][0], 9 * element_size);
-        durations[9] = 3 * DD;
-        memcpy(&durations[10], &morse_digits[time[0]-'0'][0], 9 * element_size);
-        durations[19] = 7 * DD;
-        memcpy(&durations[20], &morse_digits[time[2]-'0'][0], 9 * element_size);
-        durations[29] = 3 * DD;
-        memcpy(&durations[30], &morse_digits[time[3]-'0'][0], 9 * element_size);
+        elements_written += append_digit(&durations[elements_written], '0');
+        elements_written += append_digit(&durations[elements_written], time[0]);
+        // pause after hours is longer
+        durations[elements_written - 1] = 7*DD;
+        elements_written += append_digit(&durations[elements_written], time[2]);
+        elements_written += append_digit(&durations[elements_written], time[3]);
     } else {
         // hour has two digits
-        memcpy(&durations[0], &morse_digits[time[0]-'0'][0], 9 * element_size);
-        durations[9] = 3 * DD;
-        memcpy(&durations[10], &morse_digits[time[1]-'0'][0], 9 * element_size);
-        durations[19] = 7 * DD;
-        memcpy(&durations[20], &morse_digits[time[3]-'0'][0], 9 * element_size);
-        durations[29] = 3 * DD;
-        memcpy(&durations[30], &morse_digits[time[4]-'0'][0], 9 * element_size);
+        elements_written += append_digit(&durations[elements_written], time[0]);
+        elements_written += append_digit(&durations[elements_written], time[1]);
+        // pause after hours is longer
+        durations[elements_written - 1] = 7*DD;
+        elements_written += append_digit(&durations[elements_written], time[3]);
+        elements_written += append_digit(&durations[elements_written], time[4]);
     }
+    // the last element in durations is a pause, hence subtract 1
+    return elements_written - 1;
 }
 
 static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
     // get current time and fill durations array based on the time
     char *timestr = malloc(10);
     clock_copy_time_string(timestr, 8);
-    fill_durations_array(durations, timestr);
+    size_t durations_size = fill_durations_array(durations, timestr);
     free(timestr);
 
     // create and queue the vibrations pattern
     // this call is async so we can't just free durations array memory
     VibePattern pat = {
         .durations = durations,
-        .num_segments = 39,
+        .num_segments = durations_size,
     };
     vibes_enqueue_custom_pattern(pat);
 }
@@ -69,7 +91,7 @@ static void click_config_provider(void *context) {
 }
 
 static void init(void) {
-    durations = (uint32_t*) malloc((4*9 + 3) * sizeof(uint32_t));
+    durations = (uint32_t*) malloc(40 * sizeof(uint32_t));
     window = window_create();
     window_set_click_config_provider(window, click_config_provider);
     const bool animated = false;
