@@ -51,7 +51,7 @@ static size_t fill_durations_array(uint32_t *durations, char *time) {
     size_t elements_written = 0;
     if (time[1] == ':') {
         // hour only has a single digit
-        elements_written += append_digit(&durations[elements_written], '0');
+        //elements_written += append_digit(&durations[elements_written], '0');
         elements_written += append_digit(&durations[elements_written], time[0]);
         // pause after hours is longer
         durations[elements_written - 1] = 7*DD;
