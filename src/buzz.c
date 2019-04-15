@@ -9,6 +9,8 @@ static Window *window;
 static uint32_t *durations;
 
 static size_t append_digit(uint32_t *position, char digit) {
+    // takes a position where it can start writing elements and a digit
+    // returns the number of elements appended so position can be advanced
     int d = digit - '0';
     if (d == 0) {
         // append dashes
@@ -16,31 +18,33 @@ static size_t append_digit(uint32_t *position, char digit) {
             position[2*i] = 3*DD;
             position[2*i + 1] = DD;
         }
-        // pause after digit is longer
-        position[9] = 3*DD;
-        // move position to where the next element would go
-        return 10;
     } else if (d < 6) {
         // append dots
-        for (int i=0; i<d; i++) {
-            position[2*i] = DD;
-            position[2*i + 1] = DD;
+        for (int i=0; i<5; i++) {
+            if (i < d) {
+                position[2*i] = DD;
+                position[2*i + 1] = DD;
+            } else {
+                position[2*i] = 3*DD;
+                position[2*i + 1] = DD;
+            }
         }
-        // pause after digit is longer
-        position[2*d - 1] = 3*DD;
-        // move position to where the next element would go
-        return 2*d;
     } else {
         // append dashes
         for (int i=0; i<d-5; i++) {
-            position[2*i] = 3*DD;
-            position[2*i + 1] = DD;
+            if (i < d) {
+                position[2*i] = 3*DD;
+                position[2*i + 1] = DD;
+            } else {
+                position[2*i] = DD;
+                position[2*i + 1] = DD;
+            }
         }
-        // pause after digit is longer
-        position[2*(d-5) - 1] = 3*DD;
-        // move position to where the next element would go
-        return 2*(d-5);
     }
+    // pause after digit is longer
+    position[9] = 3*DD;
+    // we added 5 new ./- and 4 spaces, next element is 10 items down
+    return 10;
 }
 
 // fill durations based on time string, return the number of segments
