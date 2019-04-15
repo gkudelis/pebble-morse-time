@@ -31,7 +31,7 @@ static size_t append_digit(uint32_t *position, char digit) {
         }
     } else {
         // append dashes
-        for (int i=0; i<d-5; i++) {
+        for (int i=0; i<5; i++) {
             if (i < d) {
                 position[2*i] = 3*DD;
                 position[2*i + 1] = DD;
